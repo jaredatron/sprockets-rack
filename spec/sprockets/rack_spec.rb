@@ -13,20 +13,10 @@ describe Sprockets::Rack do
   end
 
   it "should instantiate a sprockets secretary with the given options" do
-    Sprockets::Secretary.should_receive(:new).with({
-      :never_update  => false,
-      :always_update => false,
-      :destination   => 'sprockets.js',
-      :include_views => false,
-      :another       => :option,
-    })
-    Sprockets::Rack.new(passthrough_app, {
-      :never_update  => false,
-      :always_update => false,
-      :destination   => 'sprockets.js',
-      :include_views => false,
-      :another       => :option,
-    })
+    Sprockets::Secretary.stub!(:new) do |options|
+      options[:random].should == :stuff
+    end
+    Sprockets::Rack.new(passthrough_app, {:random => :stuff})
   end
 
   describe "#root" do
@@ -118,7 +108,43 @@ describe Sprockets::Rack do
       })
       sprockets_rack.call(env)
       File.read(destination).should =~ /#{Regexp.escape(File.read('spec/javascripts/layout.js').split("\n").first)}/
-      FileUtils.rm(destination)
+    end
+  end
+
+  describe "with :include_views set to true" do
+    it "should add the views directory to the load path and the tempfile to the source files" do
+      sprockets_rack = Sprockets::Rack.new(passthrough_app,{
+        :include_views => true,
+        :views         => 'spec/views',
+        :destination   => random_destination,
+        :load_path     => [],
+        :source_files  => [],
+      })
+      options = sprockets_rack.instance_variable_get(:@options)
+      options[:load_path].should == ['spec/views']
+      tempfile_path = sprockets_rack.send(:views_tempfile).path
+      options[:source_files].should == [tempfile_path]
+    end
+
+    it "should compile all the javascript files in the views directory into a temp file" do
+      sprockets_rack = Sprockets::Rack.new(passthrough_app,{
+        :include_views => true,
+        :views         => 'spec/views',
+        :destination   => random_destination,
+      })
+      options = sprockets_rack.instance_variable_get(:@options)
+      tempfile_path = sprockets_rack.send(:views_tempfile).path
+      sprockets_rack.call(env)
+
+      value = File.read(tempfile_path)
+
+      Dir[File.join(options[:views],'*/[^_]*.js')].map do |path|
+        value.should =~ /#{Regexp.escape("//= require <#{path}>")}/
+      end
+
+      Dir[File.join(options[:views],'*/_*.js')].map do |path|
+        value.should_not =~ /#{Regexp.escape("//= require <#{path}>")}/
+      end
     end
   end
 

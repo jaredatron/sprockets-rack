@@ -3,17 +3,35 @@ require 'sprockets'
 class Sprockets::Rack
 
   OPTIONS = {
-    :never_update  => false,
-    :always_update => false,
-    :destination   => 'sprockets.js',
+    :never_update          => false,
+    :always_update         => false,
+    :source_files          => [],
+    :load_path             => [],
+    :destination           => 'sprockets.js',
+    :include_views         => false,
   }
 
+  # Initialize the middleware.
+  #
+  # @param app [#call] The Rack application
   def initialize(app, options = {})
     @app = app
     @options = OPTIONS.merge(options)
+
+    if @options[:include_views]
+      require File.join(File.dirname(__FILE__),'rack/include_views')
+      extend Sprockets::Rack::IncludeViews
+      initialize_view_inclusion
+    end
+
     @secretary = Sprockets::Secretary.new(@options)
   end
 
+  # Process a request, checking the JavaScript files for changes
+  # and update them if necessary.
+  #
+  # @param env The Rack request environment
+  # @return [(#to_i, {String => String}, Object)] The Rack response
   def call(env)
     update  if needs_updating?
     @app.call(env)
