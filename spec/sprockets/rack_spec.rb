@@ -1,7 +1,7 @@
 require 'FileUtils'
-require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
+require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
-describe SprocketsRack do
+describe Sprockets::Rack do
 
   passthrough_app = Proc.new{|env| env}
   env = {}
@@ -20,7 +20,7 @@ describe SprocketsRack do
       :include_views => false,
       :another       => :option,
     })
-    SprocketsRack.new(passthrough_app, {
+    Sprockets::Rack.new(passthrough_app, {
       :never_update  => false,
       :always_update => false,
       :destination   => 'sprockets.js',
@@ -31,24 +31,24 @@ describe SprocketsRack do
 
   describe "#root" do
     it "should default to '.'" do
-      SprocketsRack.new(passthrough_app).send(:root).should == '.'
-      SprocketsRack.new(passthrough_app,{:root => 'somewhere/else'}).send(:root).should == 'somewhere/else'
+      Sprockets::Rack.new(passthrough_app).send(:root).should == '.'
+      Sprockets::Rack.new(passthrough_app,{:root => 'somewhere/else'}).send(:root).should == 'somewhere/else'
     end
   end
 
   describe "#destination" do
     it "should default to ':root/sprockets.js'" do
-      SprocketsRack.new(passthrough_app).send(:destination).should == './sprockets.js'
-      SprocketsRack.new(passthrough_app,{
+      Sprockets::Rack.new(passthrough_app).send(:destination).should == './sprockets.js'
+      Sprockets::Rack.new(passthrough_app,{
         :root => 'someplace'
       }).send(:destination).should == 'someplace/sprockets.js'
     end
     it "should join :root and :destination" do
-      SprocketsRack.new(passthrough_app,{
+      Sprockets::Rack.new(passthrough_app,{
         :root => 'someplace',
         :destination => 'application.js'
       }).send(:destination).should == 'someplace/application.js'
-      SprocketsRack.new(passthrough_app,{
+      Sprockets::Rack.new(passthrough_app,{
         :root => 'someplace',
         :destination => '/tmp/application.js'
       }).send(:destination).should == '/tmp/application.js'
@@ -57,21 +57,21 @@ describe SprocketsRack do
 
   describe "#call" do
     it "should take an env, pass it to the app and return that return value" do
-      SprocketsRack.new(passthrough_app,{:destination => random_destination}).call(env).should == env
+      Sprockets::Rack.new(passthrough_app,{:destination => random_destination}).call(env).should == env
     end
   end
 
   describe "#needs_updating?" do
     it "should return true if :always_update => true" do
-      SprocketsRack.new(passthrough_app, {:always_update => true}).send(:needs_updating?).should == true
+      Sprockets::Rack.new(passthrough_app, {:always_update => true}).send(:needs_updating?).should == true
     end
 
     it "should return false if :never_update => true" do
-      SprocketsRack.new(passthrough_app, {:never_update => true}).send(:needs_updating?).should == false
+      Sprockets::Rack.new(passthrough_app, {:never_update => true}).send(:needs_updating?).should == false
     end
 
     it "should return true if we've never sprocketized before" do
-      sprockets_rack = SprocketsRack.new(passthrough_app,{
+      sprockets_rack = Sprockets::Rack.new(passthrough_app,{
         :source_files          => ['spec/javascripts/layout.js'],
         :destination           => random_destination,
       })
@@ -83,7 +83,7 @@ describe SprocketsRack do
     it "should return true if the source files mtimes change" do
       FileUtils.cp('spec/javascripts/layout.js', 'tmp/layout.js')
       File.utime(File.atime('tmp/layout.js'), File.mtime('tmp/layout.js') - 1000, 'tmp/layout.js')
-      sprockets_rack = SprocketsRack.new(passthrough_app,{
+      sprockets_rack = Sprockets::Rack.new(passthrough_app,{
         :source_files          => ['tmp/layout.js'],
         :destination           => random_destination,
       })
@@ -96,7 +96,7 @@ describe SprocketsRack do
 
     it "should return true if the destination file does not exist" do
       destination = random_destination
-      sprockets_rack = SprocketsRack.new(passthrough_app,{
+      sprockets_rack = Sprockets::Rack.new(passthrough_app,{
         :source_files          => ['spec/javascripts/layout.js'],
         :destination           => destination,
       })
@@ -112,7 +112,7 @@ describe SprocketsRack do
   describe "#update" do
     it "should write to the destination file" do
       destination = random_destination
-      sprockets_rack = SprocketsRack.new(passthrough_app,{
+      sprockets_rack = Sprockets::Rack.new(passthrough_app,{
         :source_files          => ['spec/javascripts/layout.js'],
         :destination           => destination,
       })

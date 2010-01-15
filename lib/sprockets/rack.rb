@@ -1,6 +1,6 @@
 require 'sprockets'
 
-class SprocketsRack
+class Sprockets::Rack
 
   OPTIONS = {
     :never_update  => false,
