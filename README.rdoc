@@ -1,6 +1,23 @@
 = sprockets-rack
 
-Description goes here.
+Uses Sprockets to concatenate javascript source files on every request if necessary
+
+= Usage
+
+ require 'sprockets/rack'
+
+ use Sprockets::Rack, {
+   # Standard Sprokets::Secretary options
+   :never_update          => false,
+   :always_update         => false,
+   :source_files          => [],
+   :load_path             => [],
+
+   # Additional options
+   :destination   => 'public/javascripts/application.js'
+   :include_views => true
+ }
+
 
 == Note on Patches/Pull Requests
  
